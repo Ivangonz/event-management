@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/jackc/pgx/v4"
@@ -20,14 +21,16 @@ func RegisterUser(c echo.Context) error {
 	user := new(User)
 
 	if err := c.Bind(user); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+		log.Printf("Error binding user: %v", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid input"})
 	}
 
 	_, err := db.Exec(context.Background(),
 		"INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
 		user.Name, user.Email, user.Password)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		log.Printf("Error inserting user into database: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Database error"})
 	}
 
 	return c.JSON(http.StatusOK, user)
